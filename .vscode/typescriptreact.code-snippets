@@ -1,0 +1,81 @@
+{
+  "Page Component": {
+    "prefix": "page",
+    "description": "Page Component",
+    "body": [
+      "import Image from 'next/image'",
+      "import Link from 'next/link'",
+      "",
+      "export default async function Page() {",
+      "  return (",
+      "    <div className=\"\">",
+      "      <pre className=\"overflow-x-scroll\">{JSON.stringify({}, null, 2)}</pre>",
+      "    </div>",
+      "  )",
+      "}",
+      ""
+    ]
+  },
+  "Head Component": {
+    "prefix": "head",
+    "description": "Head Component",
+    "body": [
+      "export default function $1Head() {",
+      "  const title = '나의 새소식'",
+      "  const description = '가격 변동 알리미'",
+      "",
+      "  return (",
+      "    <>",
+      "      <title>{title}</title>",
+      "      <meta name=\"description\" content={description} />",
+      "      <meta property=\"og:title\" content={title} />",
+      "      <meta property=\"og:description\" content={description} />",
+      "      <meta property=\"og:image\" content=\"/images/og-image.webp\" />",
+      "      <meta property=\"og:image:alt\" content=\"/images/og-image.webp\" />",
+      "      <meta property=\"og:url\" content={`\\${CANONICAL_URL}/$2`} />",
+      "    </>",
+      "  )",
+      "}"
+    ]
+  },
+  "Layout Component": {
+    "prefix": "layout",
+    "description": "Layout Component",
+    "body": [
+      "import { ReactNode } from 'react'",
+      "",
+      "type Props = {",
+      "  children: ReactNode",
+      "}",
+      "",
+      "export default function Layout({ children }: Props) {",
+      "  return <main>{children}</main>",
+      "}",
+      ""
+    ]
+  },
+  "Function Component": {
+    "prefix": "fc",
+    "body": ["export default function ${TM_FILENAME_BASE}() {", "  return <>$1</>", "}", ""],
+    "description": "Function Component"
+  },
+  "Function Component with Props": {
+    "prefix": "fcp",
+    "description": "Function Component with Props",
+    "body": [
+      "type Props = {",
+      "  $1",
+      "}",
+      "",
+      "export default function ${TM_FILENAME_BASE}({  }: Props) {",
+      "  return <></>",
+      "}",
+      ""
+    ]
+  },
+  "pre": {
+    "prefix": "pre",
+    "description": "pre",
+    "body": ["<pre>{JSON.stringify($1, null, 2)}</pre>"]
+  }
+}
