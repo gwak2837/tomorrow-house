@@ -9,7 +9,7 @@ export default function Gallery() {
   const [images, setImages] = useState(['/images/1.png', '/images/2.png', '/images/3.png'])
 
   return (
-    <ul className="grid gap-8">
+    <ul className="grid grid-cols-[repeat(auto-fit,minmax(230px,1fr))] gap-8">
       {images.map((image, i) => (
         <li key={i}>
           <Image src={image} alt={image} width="768" height="400" className="rounded-lg" />

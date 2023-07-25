@@ -1,14 +1,22 @@
 import { MouseEventHandler } from 'react'
 
 type Props = {
+  className?: string
   isDown?: boolean
   hasColor?: boolean
   onClick?: MouseEventHandler<SVGSVGElement>
 }
 
-export default function Arrow({ isDown, hasColor, onClick }: Props) {
+export default function Arrow({ className, isDown, hasColor, onClick }: Props) {
   return isDown ? (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" onClick={onClick}>
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      className={className}
+      onClick={onClick}
+    >
       <path
         fillRule="evenodd"
         clipRule="evenodd"

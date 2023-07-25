@@ -93,14 +93,14 @@ export default function ImageUploadForm() {
         className={loading >= 3 ? 'hidden' : ''}
       >
         <label>
-          <div className="relative bg-stone-900 rounded-xl h-60 my-4 hover:cursor-pointer overflow-hidden">
+          <div className="relative aspect-video bg-stone-900 rounded-xl my-4 hover:cursor-pointer overflow-hidden">
             {imagePreviewURL && (
               <Image
                 src={imagePreviewURL}
                 alt={imagePreviewURL}
-                width={768}
-                height={280}
-                className="absolute inset-2/4	-translate-x-2/4 -translate-y-2/4 object-cover z-10"
+                width="732"
+                height="556"
+                className="w-full h-full relative object-cover z-10"
                 onClick={getObjectArea}
               />
             )}
@@ -112,8 +112,8 @@ export default function ImageUploadForm() {
                 </div>
               </div>
             )}
-            <UploadIcon className="absolute inset-2/4	-translate-x-2/4 -translate-y-2/4	" />
-            <h3 className="w-fit h-fit break-keep	whitespace-nowrap	absolute inset-2/4	-translate-x-2/4 -translate-y-2/4 text-stone-400">
+            <UploadIcon className="absolute inset-2/4	-translate-x-2/4 -translate-y-2/4	z-0" />
+            <h3 className="w-fit h-fit break-keep	whitespace-nowrap	absolute inset-2/4	-translate-x-2/4 -translate-y-2/4 z-0 text-stone-400">
               이미지 업로드
             </h3>
           </div>
@@ -134,12 +134,13 @@ export default function ImageUploadForm() {
               <div className="grid grid-cols-[auto_1fr_auto] gap-3 bg-stone-800 border-2 p-4 border-indigo-500 rounded-2xl">
                 <SearchIcon />
                 <input
-                  className="focus:outline-none"
+                  className="w-full focus:outline-none"
                   onChange={(e) => setPlaceType(e.target.value)}
                   placeholder="공간 유형 선택"
                   value={placeType}
                 />
                 <Arrow
+                  className="cursor-pointer"
                   hasColor
                   onClick={() => {
                     setIsOpen(false)
@@ -154,11 +155,12 @@ export default function ImageUploadForm() {
               >
                 <div className="w-[24px]" />
                 <input
-                  className="focus:outline-none"
+                  className="w-full min-w-[100px] focus:outline-none"
+                  readOnly
                   placeholder="공간 유형 선택"
                   value={placeType}
                 />
-                <Arrow isDown />
+                <Arrow className="cursor-pointer" isDown />
               </div>
             )}
 
