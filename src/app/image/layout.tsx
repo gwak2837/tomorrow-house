@@ -2,7 +2,6 @@ import Link from 'next/link'
 import { ReactNode } from 'react'
 import Logo from 'src/svgs/Logo'
 import PictureLogo from 'src/svgs/PictureLogo'
-import SettingIcon from 'src/svgs/SettingIcon'
 
 import Gallery from './Gallery'
 import LoginInfo from './LoginInfo'
@@ -16,7 +15,9 @@ export default function Layout(props: Props) {
   return (
     <main className="mx-auto max-w-screen-md p-4">
       <div className="flex justify-between items-center gap-2 my-8">
-        <Logo />
+        <Link href="/">
+          <Logo />
+        </Link>
         <div className="flex gap-2">
           <LoginInfo />
         </div>
