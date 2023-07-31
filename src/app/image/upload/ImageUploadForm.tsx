@@ -18,9 +18,6 @@ enum Loading {
   loading4,
 }
 
-// id: hjgp
-// token: 850a5a6d46c283094f6c336da0343017671cfa62
-
 export default function ImageUploadForm() {
   const formData = useRef(globalThis.FormData ? new FormData() : null)
   const [imagePreviewURL, setImagePreviewURL] = useState('')

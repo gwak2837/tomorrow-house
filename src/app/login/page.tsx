@@ -13,7 +13,9 @@ export default async function Page() {
     >
       <div className="w-full max-w-md flex-col">
         <div className="flex flex-col items-center justify-center">
-          <Logo width={168} />
+          <Link href="/">
+            <Logo width={168} />
+          </Link>
           <h2 className="mt-2 translate-y-px text-lg font-medium text-stone-300">로그인</h2>
         </div>
 
@@ -21,15 +23,20 @@ export default async function Page() {
 
         <p className="mt-4 text-center text-sm text-stone-400">
           HOMI AI가 처음이신가요?{' '}
-          <Link href="/signup" className="underline underline-offset-2 hover:text-stone-200">
+          <a
+            href="https://app.planby.us/signup"
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-2 hover:text-stone-200"
+          >
             회원가입
-          </Link>
+          </a>
         </p>
       </div>
       <div className="mt-4 h-0.5 w-full max-w-md bg-stone-700"></div>
       <p className="mt-4 text-center text-lg font-medium text-stone-300">소셜 로그인</p>
       <div className="mt-4 flex justify-around">
-        <Link
+        <a
           href={`https://kauth.kakao.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_KAKAO_OAUTH_CLIENT_ID}&redirect_uri=${process.env.NEXT_PUBLIC_KAKAO_OAUTH_REDIRECT_URI}&response_type=code`}
         >
           <button className="flex h-12 w-12 items-center justify-center rounded-full border border-stone-400 bg-[#FEE500]">
@@ -44,7 +51,7 @@ export default async function Page() {
               </svg>
             </div>
           </button>
-        </Link>
+        </a>
       </div>
     </div>
   )

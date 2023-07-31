@@ -5,6 +5,7 @@ import { FormEvent, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useSetRecoilState } from 'recoil'
 import { NEXT_PUBLIC_SERVER_API_URL } from 'src/common/constants'
+import LoadingSpinner from 'src/svgs/LoadingSpinner'
 
 import { userAtom } from '../image/LoginInfo'
 
@@ -13,6 +14,8 @@ export default function LoginForm() {
   const passwordInputRef = useRef<HTMLInputElement>(null)
 
   const [isEmailError, setIsEmailError] = useState(false)
+
+  const [loading, setLoading] = useState(false)
 
   const setUser = useSetRecoilState(userAtom)
 
@@ -28,7 +31,11 @@ export default function LoginForm() {
     if (!validateEmail(email)) {
       setIsEmailError(true)
       return toast.error('Please enter a valid email')
+    } else {
+      setIsEmailError(false)
     }
+
+    setLoading(true)
 
     const response = await fetch(`${NEXT_PUBLIC_SERVER_API_URL}/auth/login`, {
       method: 'POST',
@@ -80,9 +87,11 @@ export default function LoginForm() {
         />
       </label>
       <button
-        className="rounded-lg bg-indigo-500 px-6 font-semibold text-white transition-colors duration-300 hover:bg-indigo-700 w-full py-4 text-xl mt-8"
+        className="flex gap-2 justify-center items-center rounded-lg bg-indigo-500 px-6 font-semibold text-white transition-colors duration-300 w-full py-4 text-xl mt-8 hover:bg-indigo-700 disabled:bg-slate-400"
+        disabled={loading}
         type="submit"
       >
+        {loading && <LoadingSpinner />}
         로그인
       </button>
     </form>

@@ -19,7 +19,6 @@ export default function LoginInfo() {
       ) : (
         <>
           <Link href="/login">로그인</Link>
-          <SettingIcon />
         </>
       )}
     </>
