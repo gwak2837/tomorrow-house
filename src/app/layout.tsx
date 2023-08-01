@@ -9,6 +9,8 @@ import ReactHotToast from 'src/components/ReactHotToast'
 import ReactQuery from 'src/components/ReactQuery'
 import Recoil from 'src/components/Recoil'
 
+import Authentication from './Authentication'
+
 export const metadata: Metadata = {
   title: '내일의집',
   description: 'AI가 만드는 내일의 인테리어를 경험해보세요',
@@ -39,7 +41,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="ko-KR">
       <body className={myFont.className}>
         <Recoil>
-          <ReactQuery>{children}</ReactQuery>
+          <ReactQuery>
+            <Authentication />
+            {children}
+          </ReactQuery>
         </Recoil>
         <ReactHotToast />
       </body>

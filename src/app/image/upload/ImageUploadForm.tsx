@@ -1,8 +1,9 @@
 'use client'
 
 import Image from 'next/image'
-import { ChangeEvent, FormEvent, MouseEvent, useRef, useState } from 'react'
+import { ChangeEvent, FormEvent, MouseEvent, useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
+import { NEXT_PUBLIC_SERVER_API_URL } from 'src/common/constants'
 import { sleep } from 'src/common/utils'
 import Arrow from 'src/svgs/Arrow'
 import LoadingIcon from 'src/svgs/LoadingIcon'
@@ -10,31 +11,46 @@ import SearchIcon from 'src/svgs/SearchIcon'
 import SianIcon from 'src/svgs/SianIcon'
 import UploadIcon from 'src/svgs/UploadIcon'
 
-enum Loading {
-  loading,
-  loading1,
-  loading2,
-  loading3,
-  loading4,
+enum Status {
+  idle,
+  uploadingImage,
+  renderingImage,
+  identifyingObjects,
+  identifiedObjects,
+  renderingObjects,
+  renderedObjects,
 }
 
 export default function ImageUploadForm() {
+  // Image upload
   const formData = useRef(globalThis.FormData ? new FormData() : null)
   const [imagePreviewURL, setImagePreviewURL] = useState('')
-  const [loading, setLoading] = useState(Loading.loading)
+  const [status, setStatus] = useState(Status.idle)
 
-  async function createPreviewImages(e: ChangeEvent<HTMLInputElement>) {
+  const sseClientId = useRef<string>()
+
+  async function uploadImage(e: ChangeEvent<HTMLInputElement>) {
+    if (!sseClientId.current) return
+
     const file = e.target.files?.[0]
     if (!file || !file.type.startsWith('image/') || !formData.current) return
 
     setImagePreviewURL(URL.createObjectURL(file))
-    formData.current.append('image', file)
+    formData.current.append(sseClientId.current, file)
 
-    setLoading(1)
+    setStatus(Status.uploadingImage)
 
-    await sleep(3000) // setImagePreviewURL('google storage url')
+    const response = await fetch(`${NEXT_PUBLIC_SERVER_API_URL}/upload/image/ai`, {
+      method: 'POST',
+      body: formData.current,
+    })
 
-    setLoading(2)
+    if (!response.ok) {
+      setImagePreviewURL('')
+      setStatus(Status.idle)
+      formData.current = null
+      return toast.error(await response.text())
+    }
   }
 
   const [objectAreas, setObjectAreas] = useState<Record<string, any>[]>([])
@@ -59,7 +75,7 @@ export default function ImageUploadForm() {
   async function getImagesFromAI(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
 
-    setLoading(3)
+    setStatus(Status.renderingObjects)
 
     await sleep(3000) // fetch('/asdf', { body: { objectAreas, imageURL: imagePreviewURL } })
     setImages([
@@ -69,15 +85,57 @@ export default function ImageUploadForm() {
       '/images/ai-4.png',
       '/images/ai-5.png',
     ])
-
-    setLoading(4)
   }
+
+  // https://developer.mozilla.org/en-US/docs/Web/API/EventSource
+  const eventSource = useRef<EventSource>()
+
+  function connectSSE() {
+    eventSource.current = new EventSource(`${NEXT_PUBLIC_SERVER_API_URL}/upload/image/ai`)
+
+    eventSource.current.onerror = () => {
+      setImagePreviewURL('')
+      setStatus(Status.idle)
+      formData.current = null
+      toast.error('EventSource error')
+    }
+
+    eventSource.current.addEventListener('sse-client-id', (e) => {
+      sseClientId.current = e.data
+    })
+
+    eventSource.current.addEventListener('images', (e) => {
+      if (e.lastEventId === 'gcp') setStatus(Status.renderingImage)
+      else if (e.lastEventId === 'ai') setStatus(Status.identifyingObjects)
+      else if (e.lastEventId === 'ai2') setStatus(Status.renderedObjects)
+
+      setImagePreviewURL(JSON.parse(e.data)[0].url)
+    })
+
+    eventSource.current.addEventListener('coords', (e) => {
+      setStatus(Status.identifiedObjects)
+
+      console.log('👀 ~ e.data:', e.data)
+    })
+  }
+
+  function disconnect() {
+    if (!eventSource.current) return
+
+    eventSource.current.close()
+  }
+
+  useEffect(() => {
+    connectSSE()
+
+    return () => disconnect()
+  }, [])
 
   return (
     <>
-      {loading < 2 ? (
+      {status <= Status.identifyingObjects ? (
         <h3 className="text-lg my-4">1. 방 사진을 업로드해주세요</h3>
-      ) : loading === 2 ? (
+      ) : status === Status.identifiedObjects || status === Status.renderingObjects ? (
         <h3 className="text-lg my-4">
           2.사진에서 <u>변경할 부분을 선택</u> 해주세요
         </h3>
@@ -90,7 +148,7 @@ export default function ImageUploadForm() {
       <form
         encType="multipart/form-data"
         onSubmit={getImagesFromAI}
-        className={loading >= 3 ? 'hidden' : ''}
+        className={status >= Status.renderedObjects ? 'hidden' : ''}
       >
         <label>
           <div className="relative aspect-video bg-stone-900 rounded-xl my-4 hover:cursor-pointer overflow-hidden">
@@ -104,11 +162,19 @@ export default function ImageUploadForm() {
                 onClick={getObjectArea}
               />
             )}
-            {loading === 1 && (
+            {status >= Status.uploadingImage && status <= Status.identifyingObjects && (
               <div className="absolute inset-0 bg-white/50 z-10">
                 <div className="absolute inset-2/4 -translate-x-2/4 -translate-y-2/4 w-fit h-fit text-center break-keep	whitespace-nowrap text-black">
                   <div>Loading</div>
-                  <div>AI가 방의 구조를 인식하는 중이에요</div>
+                  <div>
+                    {status === Status.uploadingImage
+                      ? '사진을 업로드하고 있어요'
+                      : status === Status.renderingImage
+                      ? 'AI가 인테리어를 바꾸는 중이에요'
+                      : status === Status.identifyingObjects
+                      ? 'AI가 방의 구조를 인식하는 중이에요'
+                      : ''}
+                  </div>
                 </div>
               </div>
             )}
@@ -119,15 +185,15 @@ export default function ImageUploadForm() {
           </div>
           <input
             accept="image/*"
-            disabled={loading > 0}
+            disabled={status > Status.idle}
             // id="images"
             className="hidden"
-            onChange={createPreviewImages}
+            onChange={uploadImage}
             type="file"
           />
         </label>
 
-        {loading === 2 && (
+        {status === Status.identifiedObjects && (
           <>
             <h3 className="text-lg mt-8 mb-4">3. 공간 유형을 선택해주세요</h3>
             {isOpen ? (
@@ -203,13 +269,13 @@ export default function ImageUploadForm() {
 
         <button
           className="w-full text-lg p-2 my-8 rounded-lg bg-indigo-500 disabled:bg-gray-500"
-          disabled={loading < 2 || !placeType}
+          disabled={status < Status.identifiedObjects || !placeType}
         >
           시안 만들기
         </button>
       </form>
 
-      {loading === 3 && (
+      {status === Status.renderingObjects && (
         <div className="w-full my-8 bg-white rounded-lg relative aspect-video">
           <div className="absolute inset-2/4	-translate-x-2/4 -translate-y-2/4	w-fit h-fit break-keep	whitespace-nowrap">
             <LoadingIcon className="mx-auto" />
@@ -218,7 +284,7 @@ export default function ImageUploadForm() {
         </div>
       )}
 
-      {loading === 4 && (
+      {status === Status.renderedObjects && (
         <ul className="grid gap-8">
           {images.map((image, i) => (
             <li key={i}>
