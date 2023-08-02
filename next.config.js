@@ -12,7 +12,10 @@ const nextConfig = {
     },
   ],
   images: {
-    remotePatterns: [{ protocol: 'https', hostname: 'storage.googleapis.com' }],
+    remotePatterns: [
+      { protocol: 'https', hostname: 'storage.googleapis.com' },
+      { protocol: 'https', hostname: 'pbxt.replicate.delivery' },
+    ],
   },
   output: 'standalone',
   poweredByHeader: false,

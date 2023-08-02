@@ -7,6 +7,7 @@
   "extends": ["eslint:recommended", "next/core-web-vitals", "prettier"],
   "rules": {
     "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "no-constant-condition": "warn",
     "no-undef": "warn",
     "no-unused-vars": ["warn", { "varsIgnorePattern": "^_" }],
     "prefer-const": "off",
