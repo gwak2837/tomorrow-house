@@ -5,7 +5,7 @@ import { ChangeEvent, FormEvent, MouseEvent, useCallback, useEffect, useRef, use
 import toast from 'react-hot-toast'
 import { atom, useRecoilState, useSetRecoilState } from 'recoil'
 import { NEXT_PUBLIC_SERVER_API_URL } from 'src/common/constants'
-import { getUniqueId } from 'src/common/utils'
+import { getUniqueId, swap } from 'src/common/utils'
 import Arrow from 'src/svgs/Arrow'
 import LoadingIcon from 'src/svgs/LoadingIcon'
 import SearchIcon from 'src/svgs/SearchIcon'
@@ -149,19 +149,43 @@ export default function ImageUploadForm() {
   }
 
   // Image inpaint
-  const canvasRef = useRef<HTMLCanvasElement>()
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [hasMaskImage, setHasMaskImage] = useState(false)
+  const segmentationsRef = useRef<Record<string, any>>({})
 
-  function drawSegmentation(data: any) {
+  async function getObjectArea(e: MouseEvent<HTMLImageElement>) {
+    e.stopPropagation()
+    e.preventDefault()
+
+    if (!selectedImage?.segmentation) return toast.error('Segmentation info is loading')
+
+    if (!segmentationsRef.current[selectedImage.id]) {
+      const response = await fetch(selectedImage.segmentation)
+      const result = await response.json()
+      segmentationsRef.current[selectedImage.id].coords2class = result
+      segmentationsRef.current[selectedImage.id].class2coords = swap(result)
+    }
+
+    const seg = segmentationsRef.current[selectedImage.id]
+
+    const _class = seg.coords2class[`${e.nativeEvent.offsetX}:${e.nativeEvent.offsetY}`]
+    drawSegmentation(seg.class2coords[_class])
+  }
+
+  function drawSegmentation(data: string[]) {
+    setHasMaskImage(true)
+
     const canvas = canvasRef.current
     if (!canvas) return
 
     const ctx = canvas.getContext('2d')
     if (!ctx) return toast.error('Cannot draw image segmentation')
 
-    const scale = 2
     for (let i = 0; i < data.length; i++) {
+      const [x, y] = data[i].split(':')
+
       ctx.fillStyle = 'rgba(255,0,255,0.3)'
-      ctx.fillRect(data[i][0] * scale, data[i][1] * scale, scale, scale)
+      ctx.fillRect(+x, +y, 1, 1)
     }
   }
 
@@ -222,6 +246,9 @@ export default function ImageUploadForm() {
       setStatus(Status.uploadedImage)
       return response && toast.error(await response.text())
     }
+
+    setHasMaskImage(false)
+    canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height)
   }
 
   return (
@@ -238,10 +265,12 @@ export default function ImageUploadForm() {
 
       <form
         encType="multipart/form-data"
-        onSubmit={false ? generateImageFromInpaint : generateImageFromImage}
+        onSubmit={hasMaskImage ? generateImageFromInpaint : generateImageFromImage}
       >
         <label>
           <div className="relative aspect-video bg-stone-900 rounded-xl my-4 hover:cursor-pointer overflow-hidden">
+            <canvas className="absolute w-full h-full inset-0" ref={canvasRef} />
+            {/* {selectedImage?.segmentation && } */}
             {selectedImage && (
               <Image
                 src={selectedImage.url}
@@ -249,6 +278,7 @@ export default function ImageUploadForm() {
                 width="732"
                 height="556"
                 className="w-full h-full relative object-cover z-10"
+                onClick={getObjectArea}
               />
             )}
             {(status === Status.uploadingImage || status === Status.renderingImage) && (
@@ -265,6 +295,7 @@ export default function ImageUploadForm() {
                 </div>
               </div>
             )}
+
             <UploadIcon className="absolute inset-2/4	-translate-x-2/4 -translate-y-2/4	z-0" />
             <h3 className="w-fit h-fit break-keep	whitespace-nowrap	absolute inset-2/4	-translate-x-2/4 -translate-y-2/4 z-0 text-stone-400">
               이미지 업로드
