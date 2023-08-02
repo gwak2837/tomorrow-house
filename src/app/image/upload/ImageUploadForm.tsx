@@ -57,13 +57,18 @@ export default function ImageUploadForm() {
     })
 
     eventSource.current.addEventListener('segmentation', (e) => {
+      setSelectedImage((prev) =>
+        prev?.id === e.lastEventId ? { ...prev, segmentation: e.data } : prev
+      )
+
       setImages((prev) => {
         const image = prev.find((image) => image.id === e.lastEventId)
         if (!image) return prev
 
-        image.segmentation = e.data
-
-        return [...prev]
+        return [
+          { id: image.id, url: image.url, segmentation: e.data },
+          ...prev.filter((image) => image.id !== e.lastEventId),
+        ]
       })
     })
   }, [setImages, setSelectedImage])
@@ -151,22 +156,28 @@ export default function ImageUploadForm() {
   const [hasMaskImage, setHasMaskImage] = useState(false)
   const segmentationsRef = useRef<Record<string, any>>({})
 
-  async function getObjectArea(e: MouseEvent<HTMLImageElement>) {
+  async function getObjectArea(e: any) {
     e.stopPropagation()
     e.preventDefault()
+
+    toast.success(`${e.nativeEvent.offsetX}:${e.nativeEvent.offsetY}`)
 
     if (!selectedImage?.segmentation) return toast.error('Segmentation info is loading')
 
     if (!segmentationsRef.current[selectedImage.id]) {
-      const response = await fetch(selectedImage.segmentation)
+      const response = await fetch(selectedImage?.segmentation.slice(0, -1))
       const result = await response.json()
-      segmentationsRef.current[selectedImage.id].coords2class = result
-      segmentationsRef.current[selectedImage.id].class2coords = swap(result)
+      segmentationsRef.current[selectedImage.id] = {
+        coords2class: result,
+        class2coords: swap(result),
+      }
     }
 
     const seg = segmentationsRef.current[selectedImage.id]
 
     const _class = seg.coords2class[`${e.nativeEvent.offsetX}:${e.nativeEvent.offsetY}`]
+    if (!_class) return
+
     drawSegmentation(seg.class2coords[_class])
   }
 
@@ -183,7 +194,7 @@ export default function ImageUploadForm() {
       const [x, y] = data[i].split(':')
 
       ctx.fillStyle = 'rgba(255,0,255,0.3)'
-      ctx.fillRect(+x, +y, 1, 1)
+      ctx.fillRect(+x, +y, 2, 2)
     }
   }
 
@@ -266,16 +277,21 @@ export default function ImageUploadForm() {
         onSubmit={hasMaskImage ? generateImageFromInpaint : generateImageFromImage}
       >
         <label>
-          <div className="relative aspect-video bg-stone-900 rounded-xl my-4 hover:cursor-pointer overflow-hidden">
-            <canvas className="absolute w-full h-full inset-0" ref={canvasRef} />
-            {/* {selectedImage?.segmentation && } */}
+          <div className="relative min-h-[200px] bg-stone-900 rounded-xl my-4 hover:cursor-pointer overflow-hidden">
+            <canvas
+              className="absolute w-full h-full z-20"
+              width="100%"
+              height="411"
+              ref={canvasRef}
+              onMouseDown={getObjectArea}
+            />
             {selectedImage && (
               <Image
                 src={selectedImage.url}
                 alt={selectedImage.url}
-                width="732"
-                height="556"
-                className="w-full h-full relative object-cover z-10"
+                width="2000"
+                height="2000"
+                className="w-fit relative z-10"
                 onClick={getObjectArea}
               />
             )}
@@ -350,17 +366,17 @@ export default function ImageUploadForm() {
             <li className="cursor-pointer" onClick={() => setSpaceCategory('베란다')}>
               베란다
             </li>
-            <li className="cursor-pointer" onClick={() => setSpaceCategory('홈 오피스')}>
-              홈 오피스
-            </li>
-            <li className="cursor-pointer" onClick={() => setSpaceCategory('오피스')}>
-              오피스
-            </li>
             <li className="cursor-pointer" onClick={() => setSpaceCategory('화장실')}>
               화장실
             </li>
             <li className="cursor-pointer" onClick={() => setSpaceCategory('아이방')}>
               아이방
+            </li>
+            <li className="cursor-pointer" onClick={() => setSpaceCategory('홈 오피스')}>
+              홈 오피스
+            </li>
+            <li className="cursor-pointer" onClick={() => setSpaceCategory('오피스')}>
+              오피스
             </li>
             <li className="cursor-pointer" onClick={() => setSpaceCategory('카페')}>
               카페
