@@ -23,6 +23,10 @@ enum Status {
 export const selectedImageAtom = atom<TImage | null>({
   key: 'selectedImageAtom',
   default: null,
+  // default: {
+  //   id: 'lku95uwnzq97gdj43pd',
+  //   url: 'https://storage.googleapis.com/tomorrow-house/KakaoTalk_Photo_2023-08-03-00-00-28.jpeg',
+  // },
 })
 
 export default function ImageUploadForm() {
@@ -157,14 +161,14 @@ export default function ImageUploadForm() {
   const segmentationsRef = useRef<Record<string, any>>({})
 
   async function getObjectArea(e: any) {
-    e.stopPropagation()
-    e.preventDefault()
+    if (!selectedImage) return
 
-    toast.success(`${e.nativeEvent.offsetX}:${e.nativeEvent.offsetY}`)
+    toast.success(`${e.nativeEvent.offsetX}:${e.nativeEvent.offsetY}`) //
 
     if (!selectedImage?.segmentation) return toast.error('Segmentation info is loading')
 
     if (!segmentationsRef.current[selectedImage.id]) {
+      console.log('👀 ~ selectedImage:', selectedImage)
       const response = await fetch(selectedImage?.segmentation.slice(0, -1))
       const result = await response.json()
       segmentationsRef.current[selectedImage.id] = {
@@ -277,11 +281,14 @@ export default function ImageUploadForm() {
         onSubmit={hasMaskImage ? generateImageFromInpaint : generateImageFromImage}
       >
         <label>
-          <div className="relative min-h-[200px] bg-stone-900 rounded-xl my-4 hover:cursor-pointer overflow-hidden">
+          <div
+            className={
+              'relative bg-stone-900 rounded-xl my-4 hover:cursor-pointer overflow-hidden ' +
+              (selectedImage ? '' : 'aspect-video')
+            }
+          >
             <canvas
               className="absolute w-full h-full z-20"
-              width="100%"
-              height="411"
               ref={canvasRef}
               onMouseDown={getObjectArea}
             />
@@ -291,8 +298,7 @@ export default function ImageUploadForm() {
                 alt={selectedImage.url}
                 width="2000"
                 height="2000"
-                className="w-fit relative z-10"
-                onClick={getObjectArea}
+                className="w-full h-full relative z-10"
               />
             )}
             {(status === Status.uploadingImage || status === Status.renderingImage) && (
@@ -317,7 +323,7 @@ export default function ImageUploadForm() {
           </div>
           <input
             accept="image/*"
-            disabled={status !== Status.idle}
+            disabled={!!selectedImage}
             className="hidden"
             onChange={uploadImage}
             type="file"
