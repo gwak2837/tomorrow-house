@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import { ChangeEvent, FormEvent, MouseEvent, useCallback, useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
-import { useRecoilState } from 'recoil'
+import { atom, useRecoilState, useSetRecoilState } from 'recoil'
 import { NEXT_PUBLIC_SERVER_API_URL } from 'src/common/constants'
 import { getUniqueId } from 'src/common/utils'
 import Arrow from 'src/svgs/Arrow'
@@ -22,9 +22,15 @@ enum Status {
   renderedImage,
 }
 
+export const selectedImageAtom = atom<TImage | null>({
+  key: 'selectedImageAtom',
+  default: null,
+})
+
 export default function ImageUploadForm() {
   // Gallery
-  const [images, setImages] = useRecoilState(imagesAtom)
+  const [selectedImage, setSelectedImage] = useRecoilState(selectedImageAtom)
+  const setImages = useSetRecoilState(imagesAtom)
 
   // EventSource: https://developer.mozilla.org/en-US/docs/Web/API/EventSource
   const eventSource = useRef<EventSource>()
@@ -48,7 +54,7 @@ export default function ImageUploadForm() {
       const newImages = JSON.parse(e.data) as TImage[]
 
       setSelectedImage(newImages[0])
-      setImages((prev) => [...newImages.slice(1), ...prev])
+      setImages((prev) => [...newImages, ...prev])
       setStatus(Status.renderedImage)
     })
 
@@ -62,7 +68,7 @@ export default function ImageUploadForm() {
         return [...prev]
       })
     })
-  }, [setImages])
+  }, [setImages, setSelectedImage])
 
   function disconnect() {
     if (!eventSource.current) return
@@ -78,7 +84,6 @@ export default function ImageUploadForm() {
 
   // Image upload
   const formData = useRef(globalThis.FormData ? new FormData() : null)
-  const [selectedImage, setSelectedImage] = useState<TImage | null>(null)
   const [status, setStatus] = useState(Status.idle)
 
   async function uploadImage(e: ChangeEvent<HTMLInputElement>) {
