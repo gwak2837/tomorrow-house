@@ -7,9 +7,7 @@ import { atom, useRecoilState, useSetRecoilState } from 'recoil'
 import { NEXT_PUBLIC_SERVER_API_URL } from 'src/common/constants'
 import { getUniqueId, swap } from 'src/common/utils'
 import Arrow from 'src/svgs/Arrow'
-import LoadingIcon from 'src/svgs/LoadingIcon'
 import SearchIcon from 'src/svgs/SearchIcon'
-import SianIcon from 'src/svgs/SianIcon'
 import UploadIcon from 'src/svgs/UploadIcon'
 
 import { TImage, imagesAtom } from '../Gallery'
@@ -135,7 +133,7 @@ export default function ImageUploadForm() {
         body: JSON.stringify({
           clientId: sseClientId.current,
           imageURL: selectedImage.url,
-          spaceCategory,
+          spaceCategory: decodeSpaceCategory(spaceCategory),
         }),
       })
     } catch (error: any) {
@@ -347,20 +345,41 @@ export default function ImageUploadForm() {
 
         {isOpen && (
           <ol className="my-2 grid gap-3 bg-stone-800 border-2 p-4 border-indigo-500 rounded-2xl max-h-[20vh] overflow-y-auto">
-            <li className="cursor-pointer" onClick={() => setSpaceCategory('living room')}>
+            <li className="cursor-pointer" onClick={() => setSpaceCategory('거실')}>
               거실
             </li>
-            <li className="cursor-pointer" onClick={() => setSpaceCategory('kitchen')}>
-              주방
-            </li>
-            <li className="cursor-pointer" onClick={() => setSpaceCategory('bedroom')}>
+            <li className="cursor-pointer" onClick={() => setSpaceCategory('침실')}>
               침실
             </li>
-            <li className="cursor-pointer" onClick={() => setSpaceCategory('toilet')}>
+            <li className="cursor-pointer" onClick={() => setSpaceCategory('주방')}>
+              주방
+            </li>
+            <li className="cursor-pointer" onClick={() => setSpaceCategory('베란다')}>
+              베란다
+            </li>
+            <li className="cursor-pointer" onClick={() => setSpaceCategory('홈 오피스')}>
+              홈 오피스
+            </li>
+            <li className="cursor-pointer" onClick={() => setSpaceCategory('오피스')}>
+              오피스
+            </li>
+            <li className="cursor-pointer" onClick={() => setSpaceCategory('화장실')}>
               화장실
             </li>
-            <li className="cursor-pointer" onClick={() => setSpaceCategory('classic')}>
-              클래식
+            <li className="cursor-pointer" onClick={() => setSpaceCategory('아이방')}>
+              아이방
+            </li>
+            <li className="cursor-pointer" onClick={() => setSpaceCategory('카페')}>
+              카페
+            </li>
+            <li className="cursor-pointer" onClick={() => setSpaceCategory('회의실')}>
+              회의실
+            </li>
+            <li className="cursor-pointer" onClick={() => setSpaceCategory('휴게공간')}>
+              휴게공간
+            </li>
+            <li className="cursor-pointer" onClick={() => setSpaceCategory('식당')}>
+              식당
             </li>
           </ol>
         )}
@@ -379,4 +398,35 @@ export default function ImageUploadForm() {
       </form>
     </>
   )
+}
+
+function decodeSpaceCategory(spaceCategory: string) {
+  switch (spaceCategory) {
+    case '거실':
+      return 'Living Room'
+    case '침실':
+      return 'Bedroom'
+    case '주방':
+      return 'Kitchen'
+    case '베란다':
+      return 'Balcony'
+    case '홈 오피스':
+      return 'Home Office'
+    case '오피스':
+      return 'Office'
+    case '화장실':
+      return 'Bathroom'
+    case '아이방':
+      return "Children's Room"
+    case '카페':
+      return 'Cafe'
+    case '회의실':
+      return 'Conference Room'
+    case '휴게공간':
+      return 'Lounge'
+    case '식당':
+      return 'Restaurant'
+    default:
+      return ''
+  }
 }
