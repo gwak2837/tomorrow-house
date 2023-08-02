@@ -318,14 +318,7 @@ export default function ImageUploadForm() {
               placeholder="공간 유형 선택"
               value={spaceCategory}
             />
-            <Arrow
-              className="cursor-pointer"
-              hasColor
-              onClick={() => {
-                setIsOpen(false)
-                setSpaceCategory('')
-              }}
-            />
+            <Arrow className="cursor-pointer" hasColor onClick={() => setIsOpen(false)} />
           </div>
         ) : (
           <div
