@@ -14,20 +14,6 @@ export type TImage = {
 export const imagesAtom = atom<TImage[]>({
   key: 'imagesAtom',
   default: [],
-  // default: [
-  //   {
-  //     id: '152623635',
-  //     url: 'https://storage.googleapis.com/tomorrow-house/simli-8.png',
-  //   },
-  //   {
-  //     id: '4124',
-  //     url: 'https://storage.googleapis.com/tomorrow-house/sobok-0.png',
-  //   },
-  //   {
-  //     id: '152236236',
-  //     url: 'https://storage.googleapis.com/tomorrow-house/out-0.png',
-  //   },
-  // ],
 })
 
 export default function Gallery() {

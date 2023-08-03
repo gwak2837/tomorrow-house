@@ -1,6 +1,6 @@
 'use client'
 
-import Image from 'next/image'
+import NextImage from 'next/image'
 import { ChangeEvent, FormEvent, MouseEvent, useCallback, useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { atom, useRecoilState, useSetRecoilState } from 'recoil'
@@ -26,6 +26,7 @@ export const selectedImageAtom = atom<TImage | null>({
   // default: {
   //   id: 'lku95uwnzq97gdj43pd',
   //   url: 'https://storage.googleapis.com/tomorrow-house/KakaoTalk_Photo_2023-08-03-00-00-28.jpeg',
+  //   segmentation: 'https://storage.googleapis.com/tomorrow-house/masks.json',
   // },
 })
 
@@ -61,6 +62,8 @@ export default function ImageUploadForm() {
     })
 
     eventSource.current.addEventListener('segmentation', (e) => {
+      console.log('👀 ~ e:', e.data)
+
       setSelectedImage((prev) =>
         prev?.id === e.lastEventId ? { ...prev, segmentation: e.data } : prev
       )
@@ -155,55 +158,82 @@ export default function ImageUploadForm() {
     }
   }
 
-  // Image inpaint
+  // Canvas
   const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  function resizeCanvasSize() {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const computedStyle = getComputedStyle(canvas)
+    const computedWidth = parseInt(computedStyle.getPropertyValue('width'), 10)
+    const computedHeight = parseInt(computedStyle.getPropertyValue('height'), 10)
+    canvas.width = computedWidth
+    canvas.height = computedHeight
+  }
+
+  useEffect(() => {
+    resizeCanvasSize()
+  }, [])
+
+  // Image inpaint
   const [hasMaskImage, setHasMaskImage] = useState(false)
   const segmentationsRef = useRef<Record<string, any>>({})
 
-  async function getObjectArea(e: any) {
-    if (!selectedImage) return
-
-    toast.success(`${e.nativeEvent.offsetX}:${e.nativeEvent.offsetY}`) //
-
-    if (!selectedImage?.segmentation) return toast.error('Segmentation info is loading')
-
-    if (!segmentationsRef.current[selectedImage.id]) {
-      console.log('👀 ~ selectedImage:', selectedImage)
-      const response = await fetch(selectedImage?.segmentation.slice(0, -1))
-      const result = await response.json()
-      segmentationsRef.current[selectedImage.id] = {
-        coords2class: result,
-        class2coords: swap(result),
-      }
-    }
-
-    const seg = segmentationsRef.current[selectedImage.id]
-
-    const _class = seg.coords2class[`${e.nativeEvent.offsetX}:${e.nativeEvent.offsetY}`]
-    if (!_class) return
-
-    drawSegmentation(seg.class2coords[_class])
-  }
-
-  function drawSegmentation(data: string[]) {
-    setHasMaskImage(true)
-
+  async function drawSegmentArea(e: any) {
     const canvas = canvasRef.current
     if (!canvas) return
 
     const ctx = canvas.getContext('2d')
     if (!ctx) return toast.error('Cannot draw image segmentation')
 
-    for (let i = 0; i < data.length; i++) {
-      const [x, y] = data[i].split(':')
+    if (!selectedImage) return
+    if (!selectedImage.segmentation) return toast.error('Segmentation info is loading')
 
-      ctx.fillStyle = 'rgba(255,0,255,0.3)'
-      ctx.fillRect(+x, +y, 2, 2)
+    if (!segmentationsRef.current[selectedImage.id]) {
+      const response = await fetch(selectedImage.segmentation)
+      const result = await response.json()
+      segmentationsRef.current[selectedImage.id] = {
+        coords2class: result,
+        class2coords: swap(result),
+        originalSize: await new Promise<Record<string, number>>((resolve) => {
+          const img = new Image()
+          img.onload = () => {
+            resolve({ originalWidth: img.width, originalHeight: img.height })
+          }
+          img.src = selectedImage.url
+        }),
+      }
+    }
+
+    const seg = segmentationsRef.current[selectedImage.id]
+
+    const scaleX = canvas.width / seg.originalSize.originalWidth
+    const scaleY = canvas.height / seg.originalSize.originalHeight
+    const _class =
+      seg.coords2class[
+        `${Math.round(e.nativeEvent.offsetX / scaleX)}:${Math.round(
+          e.nativeEvent.offsetY / scaleY
+        )}`
+      ]
+    if (!_class) return
+
+    const coords = seg.class2coords[_class]
+
+    setHasMaskImage(true)
+
+    for (let i = 0; i < coords.length; i++) {
+      const [x, y] = coords[i].split(':')
+
+      ctx.fillStyle = 'rgba(255,0,255,0.1)'
+      ctx.fillRect(+x * scaleX, +y * scaleY, 1, 1)
     }
   }
 
   async function generateImageFromInpaint(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
+
+    if (!selectedImage) return
 
     const canvas = canvasRef.current
     if (!canvas) return
@@ -245,9 +275,10 @@ export default function ImageUploadForm() {
     try {
       response = await fetch(`${NEXT_PUBLIC_SERVER_API_URL}/image/ai/inpaint`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           clientId: sseClientId.current,
-          targetImageURL: selectedImage,
+          targetImageURL: selectedImage.url,
           maskImageURL: await response2.text(),
         }),
       })
@@ -290,10 +321,10 @@ export default function ImageUploadForm() {
             <canvas
               className="absolute w-full h-full z-20"
               ref={canvasRef}
-              onMouseDown={getObjectArea}
+              onMouseDown={drawSegmentArea}
             />
             {selectedImage && (
-              <Image
+              <NextImage
                 src={selectedImage.url}
                 alt={selectedImage.url}
                 width="2000"
