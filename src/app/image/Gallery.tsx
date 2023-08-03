@@ -35,19 +35,26 @@ export default function Gallery() {
 
   return (
     <ul className="grid grid-cols-[repeat(auto-fit,minmax(230px,1fr))] gap-8">
-      {images
-        ?.filter((image) => image.id !== selectedImage?.id)
-        .map((image, i) => (
-          <li key={image.id} onClick={() => selectImage(image, i)}>
-            <Image
-              src={image.url}
-              alt={image.url}
-              width="768"
-              height="400"
-              className="rounded-lg object-cover aspect-video"
-            />
-          </li>
-        ))}
+      {images.length !== 0 ? (
+        images
+          .filter((image) => image.id !== selectedImage?.id)
+          .map((image, i) => (
+            <li key={image.id} onClick={() => selectImage(image, i)}>
+              <Image
+                src={image.url}
+                alt={image.url}
+                width="768"
+                height="400"
+                className="rounded-lg object-cover aspect-video"
+              />
+            </li>
+          ))
+      ) : (
+        <>
+          <li className="w-full bg-slate-300 rounded aspect-video" />
+          <li className="w-full bg-slate-300 rounded aspect-video" />
+        </>
+      )}
     </ul>
   )
 }

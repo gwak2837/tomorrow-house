@@ -15,6 +15,7 @@ const nextConfig = {
     remotePatterns: [
       { protocol: 'https', hostname: 'storage.googleapis.com' },
       { protocol: 'https', hostname: 'pbxt.replicate.delivery' },
+      { protocol: 'https', hostname: 'replicate.delivery' },
     ],
   },
   output: 'standalone',
